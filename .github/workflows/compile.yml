@@ -35,10 +35,10 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # NEUTRALIZAÇÃO DEFINITIVA DO ARQUIVO CD.H CONFLITANTE:
-          # Renomeia o arquivo para que o compilador use a libcdvd oficial do sistema sem colisões
+          # ESVAZIAMENTO DO ARQUIVO CD.H CONFLITANTE:
+          # Limpa todo o conteúdo interno do cd.h para o PS2SDK moderno assumir os comandos de mídia
           if [ -f cd.h ]; then
-            mv cd.h cd_velho.h
+            echo "" > cd.h
           fi
           
           # CORREÇÃO FÍSICA DOS TIPOS DE DADOS PARA O COMPILADOR LINUX MODERNO:
