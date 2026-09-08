@@ -1,0 +1,44 @@
+name: Compilar LbFn PS2 ELF
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch: # Permite compilar manualmente clicando no botão do GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ps2dev/ps2dev:latest
+
+    steps:
+      - name: Baixar o código-fonte
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências de build necessárias
+        run: |
+          apt-get update && apt-get install -y make gcc git
+
+      - name: Compilar Módulos Auxiliares (IRX)
+        run: |
+          cd LbFn-Andre-Cardozo-1080p-master/modules
+          make clean && make
+
+      - name: Compilar Injetor/Loader
+        run: |
+          cd LbFn-Andre-Cardozo-1080p-master/loader
+          make clean && make
+
+      - name: Compilar Emulador e Core LbFn ELF
+        run: |
+          cd LbFn-Andre-Cardozo-1080p-master
+          make clean && make
+
+      - name: Disponibilizar o arquivo ELF Pronto para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: LbFn-Optimized-PS2-ELF
+          path: |
+            LbFn-Andre-Cardozo-1080p-master/*.ELF
+            LbFn-Andre-Cardozo-1080p-master/*.elf
