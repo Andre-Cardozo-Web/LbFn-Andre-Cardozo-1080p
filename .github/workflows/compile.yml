@@ -16,19 +16,24 @@ jobs:
       - name: Baixar o código-fonte
         uses: actions/checkout@v4
 
-      - name: Instalar o utilitário Make
+      - name: Instalar utilitários e baixar biblioteca de vídeo faltando
         run: |
-          apk update && apk add --no-cache make sed
+          apk update && apk add --no-cache make sed git
+          
+          # Baixa a biblioteca gráfica oficial do PS2DEV diretamente para o seu ambiente de compilação
+          git clone https://github.com
+          cd gsKit
+          # Compila e instala a biblioteca de vídeo no sistema do GitHub
+          make && make install
+          cd ..
 
       - name: Configurar e Compilar Projeto
         run: |
-          # Adiciona caminhos genéricos e compatibilidade newlib direto no Makefile
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -Ilibito -ILibito -ILibito0.2.1modify\n|" Makefile
+          # Redireciona o código antigo para usar as chamadas modernas de vídeo instaladas
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -I/usr/local/ps2dev/gsKit/include -I/usr/local/ps2dev/gsKit/ee/include\n|" Makefile
           
-          # Mostra os arquivos do repositório no log para sabermos o que está faltando
-          echo "=== LISTA DE ARQUIVOS NO REPOSITÓRIO ==="
-          ls -R
-          echo "========================================"
+          # Substitui a chamada do ito.h pelo cabeçalho padrão de vídeo do PS2
+          sed -i 's|<ito.h>|<gsKit.h>|g' launchelf.h
           
           # Executa a compilação
           make
