@@ -24,10 +24,10 @@ jobs:
           repository: ps2homebrew/wLaunchELF
           path: base_uLE
 
-      - name: Baixar Core QuickNES Oficial (Repositório Ativo)
+      - name: Baixar Core QuickNES Oficial (Link Corrigido)
         uses: actions/checkout@v4
         with:
-          repository: retroarch-cores/QuickNES-Libretro
+          repository: libretro/QuickNES_Core
           path: quicknes_core
 
       - name: Instalar utilitários de sistema
