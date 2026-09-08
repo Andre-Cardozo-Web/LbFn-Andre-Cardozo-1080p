@@ -35,10 +35,11 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM ESTRUTURAS DE ÁUDIO E VÍDEO COMPATÍVEIS COM O SDK ATUAL:
+          # 4. REESCREVE O MAIN.C AJUSTANDO AS FUNÇÕES DE STRING E ESTRUTURA MODERNA:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
+          #include <strings.h>
           #include "launchelf.h"
           #include <audsrv.h>
           extern u8 *iomanX_irx, *fileXio_irx, *ps2dev9_irx, *ps2atad_irx, *ps2hdd_irx, *ps2fs_irx, *poweroff_irx, *iopmod_irx, *usbd_irx, *cdvd_irx, *ps2ip_irx, *ps2smap_irx, *ps2ftpd_irx, *ps2http_irx, *dns_irx, *vmc_fs_irx, *freesd_irx, *audsrv_irx;
@@ -46,7 +47,6 @@ jobs:
           int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
           char if_conf; int if_conf_len; char ip="192.168.0.10", netmask="255.255.255.0", gw="192.168.0.1", netConfig;
           
-          // Declarações externas para o compilador encontrar no viewer ou no core
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
           extern void itoDI(void);
@@ -95,17 +95,14 @@ jobs:
           void RunElf(const char *path) {
               if(!path) return;
               char *ext = strrchr(path, '.');
-              if (ext && (!stricmp(ext, ".nes") || !stricmp(ext, ".NES"))) {
+              if (ext && (!strcasecmp(ext, ".nes") || !strcasecmp(ext, ".NES"))) {
                   drawMsg("Iniciando QuickNES (44100Hz)...");
                   loadSoundModules();
-                  
-                  // Adaptação oficial do formato de áudio para o PS2SDK moderno (struct)
                   audsrv_fmt_t som_hifi;
                   som_hifi.freq = 44100;
                   som_hifi.bits = 16;
                   som_hifi.channels = 2;
                   audsrv_set_format(&som_hifi);
-                  
                   extern int quicknes_boot_rom(const char *rom_path);
                   char *p_path = (char *)path;
                   quicknes_boot_rom(p_path); redraw = fieldbuffers; return;
@@ -118,7 +115,7 @@ jobs:
           void showinfo(void) { X_drawScr(); }
           int ReadCNF(char *direlf) { return 1; }
           void Reset() { reset=true; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
-          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf.path); } X_clrScr(setting->color[COLOR_BACKGROUND]); X_drawScr(); itoVSync(); } }
+          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf[0].path[0]); } X_clrScr(setting->color[COLOR_BACKGROUND]); X_drawScr(); itoVSync(); } }
           int main(int argc, char *argv[]) {
               char tmp[MAX_PATH] = "";
               setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
