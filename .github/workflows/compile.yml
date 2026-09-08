@@ -18,17 +18,16 @@ jobs:
 
       - name: Compilar Módulos Auxiliares (IRX)
         run: |
-          cd LbFn-Andre-Cardozo-1080p-master/modules
+          cd modules
           make clean && make
 
       - name: Compilar Injetor/Loader
         run: |
-          cd LbFn-Andre-Cardozo-1080p-master/loader
+          cd loader
           make clean && make
 
       - name: Compilar Emulador e Core LbFn ELF
         run: |
-          cd LbFn-Andre-Cardozo-1080p-master
           make clean && make
 
       - name: Disponibilizar o arquivo ELF Pronto para Download
@@ -36,5 +35,5 @@ jobs:
         with:
           name: LbFn-Optimized-PS2-ELF
           path: |
-            LbFn-Andre-Cardozo-1080p-master/*.ELF
-            LbFn-Andre-Cardozo-1080p-master/*.elf
+            *.ELF
+            *.elf
