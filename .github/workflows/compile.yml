@@ -37,25 +37,25 @@ jobs:
       - name: Vincular QuickNES e Compilar Unificado
         run: |
           # Estrutura a pasta do QuickNES dentro do ambiente de compilação
-          mkdir -p base_uLE/src/quicknes
-          cp -r quicknes_core/* base_uLE/src/quicknes/
+          mkdir -p base_uLE/quicknes
+          cp -r quicknes_core/* base_uLE/quicknes/
           
           # Injeta o seu viewer.c corrigido por cima da base oficial
-          cp seu_codigo/viewer.c base_uLE/src/viewer.c
+          cp seu_codigo/viewer.c base_uLE/viewer.c
           
           # Cria um arquivo ito.h virtual para manter a compatibilidade com o seu código enviado
-          echo '#define itoNoVSync()' > base_uLE/src/ito.h
-          echo '#define itoVSync()' >> base_uLE/src/ito.h
-          echo '#define itoGsFinish()' >> base_uLE/src/ito.h
-          echo '#define itoPoint(p, x, y, z)' >> base_uLE/src/ito.h
+          echo '#define itoNoVSync()' > base_uLE/ito.h
+          echo '#define itoVSync()' >> base_uLE/ito.h
+          echo '#define itoGsFinish()' >> base_uLE/ito.h
+          echo '#define itoPoint(p, x, y, z)' >> base_uLE/ito.h
           
           cd base_uLE
           
           # Configura as flags globais de compilação diretamente no Makefile
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -Isrc -Isrc/quicknes\n|" Makefile
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -I. -Iquicknes\n|" Makefile
           
-          # Desativa chamadas de drivers ausentes que causam falhas de linkagem externa
-          sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' src/launchelf.h
+          # Desativa chamadas de drivers ausentes apontando para a raiz correta do arquivo
+          sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
           # Executa a compilação geral do ELF unificado
           make
