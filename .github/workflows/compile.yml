@@ -35,14 +35,14 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # CORREÇÃO FÍSICA DOS TIPOS DE DADOS PARA O COMPILADOR LINUX:
-          # Substitui os tipos antigos uint16 e uint64 pelas versões aceitas pelo PS2SDK atual
-          sed -i 's|uint16 |uint16_t |g' launchelf.h
-          sed -i 's|(uint16|(uint16_t|g' launchelf.h
-          sed -i 's|uint64 |uint64_t |g' launchelf.h
-          sed -i 's|(uint64|(uint64_t|g' launchelf.h
+          # CORREÇÃO CIRÚRGICA DOS TIPOS DE DADOS SEM DUPLICAÇÃO:
+          # Garante a troca exata de uint16/uint64 puramente para u16/u64 nativos do PS2SDK
+          sed -i 's|uint16_t|u16|g' launchelf.h
+          sed -i 's|uint16|u16|g' launchelf.h
+          sed -i 's|uint64_t|u64|g' launchelf.h
+          sed -i 's|uint64|u64|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM A SINTAXE DE PONTEIROS E MATRIZES TOTALMENTE CORRIGIDA:
+          # 4. REESCREVE O MAIN.C ACERTANDO O DIRECIONAMENTO DO BOTÃO PADRÃO:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -61,7 +61,7 @@ jobs:
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig[256];
+          char netConfig;
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
@@ -131,7 +131,7 @@ jobs:
           void showinfo(void) { X_drawScr(); }
           int ReadCNF(char *direlf) { return 1; }
           void Reset() { reset=TRUE; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
-          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf.path); } X_clrScr(); X_drawScr(); itoVSync(); } }
+          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf("mass:/quicknes/Monster in My Pocket (USA).nes"); } X_clrScr(); X_drawScr(); itoVSync(); } }
           int main(int argc, char *argv[]) {
               char tmp[MAX_PATH] = "";
               setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
