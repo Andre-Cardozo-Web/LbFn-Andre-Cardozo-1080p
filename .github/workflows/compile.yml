@@ -53,9 +53,9 @@ jobs:
             sed -i 's|(uint64)|(u64)|g' config.c
           fi
           
-          # 4. REMOVE O BLOQUEIO DE PORTABILIDADE (NEWLIB/FIO ERRORS) DO PS2SDK ATUAL:
-          sed -i "1s|^|EE_CFLAGS += -D_EE -D_NEWLIB_VERSION -DNEWLIB_PORT_AWARE\n|" /usr/local/ps2dev/ps2sdk/samples/Makefile.eeglobal
-          sed -i "1s|^|EE_CFLAGS += -D_EE -D_NEWLIB_VERSION -DNEWLIB_PORT_AWARE\n|" Makefile
+          # 4. REMOVE O BLOQUEIO DE PORTABILIDADE E IGNORA ADVERTÊNCIAS DE SINAL DE PONTEIRO (-Wno-pointer-sign):
+          sed -i "1s|^|EE_CFLAGS += -D_EE -D_NEWLIB_VERSION -DNEWLIB_PORT_AWARE -Wno-pointer-sign -Wno-error=pointer-sign\n|" /usr/local/ps2dev/ps2sdk/samples/Makefile.eeglobal
+          sed -i "1s|^|EE_CFLAGS += -D_EE -D_NEWLIB_VERSION -DNEWLIB_PORT_AWARE -Wno-pointer-sign -Wno-error=pointer-sign\n|" Makefile
           
           # 5. REESCREVE O MAIN.C COM AS MATRIZES DE TEXTO CORRETAS DE REDE:
           rm -f main.c
