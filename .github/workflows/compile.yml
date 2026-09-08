@@ -20,17 +20,7 @@ jobs:
         run: |
           apk update && apk add --no-cache make
 
-      - name: Compilar Módulos Auxiliares (IRX)
-        run: |
-          cd modules
-          make
-
-      - name: Compilar Injetor/Loader
-        run: |
-          cd loader
-          make
-
-      - name: Compilar Emulador e Core LbFn ELF
+      - name: Compilar Projeto Completo LbFn ELF
         run: |
           make
 
