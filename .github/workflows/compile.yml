@@ -22,17 +22,24 @@ jobs:
 
       - name: Injetar Sincronismo contra Tela Preta e Falhas Piscantes
         run: |
-          # 1. Corrige as rotas de inclusão no Makefile na raiz para a pasta Libito
-          sed -i "1s|^|EE_INCS += -ILibito0.2.1modify -I.\nEE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" Makefile
+          # 1. Injeta de forma forçada a flag e a rota absoluta no topo do Makefile para achar o ito.h
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS := -I\$(PWD)/Libito0.2.1modify \$(EE_INCS)\n|" Makefile
           
-          # 2. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador antes do build
+          # 2. Faz o mesmo ajuste no Makefile da pasta do Loader para manter o alinhamento
+          if [ -f loader/Makefile ]; then
+            sed -i "1s|^|EE_INCS := -I\$(PWD)/../Libito0.2.1modify \$(EE_INCS)\n|" loader/Makefile
+          fi
+          
+          # 3. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador antes do build
           sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
         run: |
+          # Força as variáveis globais de ambiente no terminal antes de chamar o Makefile
+          export EE_INCS="-I$(pwd)/Libito0.2.1modify -I$(pwd)"
           make clean
           make
-
+          
       - name: Disponibilizar o arquivo LbFn ELF Pronto para Download
         uses: actions/upload-artifact@v4
         with:
