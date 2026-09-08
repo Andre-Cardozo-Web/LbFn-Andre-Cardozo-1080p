@@ -36,7 +36,6 @@ jobs:
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
           # ESVAZIAMENTO DO ARQUIVO CD.H CONFLITANTE:
-          # Limpa todo o conteúdo interno do cd.h para o PS2SDK moderno assumir os comandos de mídia
           if [ -f cd.h ]; then
             echo "" > cd.h
           fi
@@ -48,7 +47,12 @@ jobs:
           sed -i 's|uint64|u64|g' launchelf.h
           sed -i 's|extern itoGsEnv screen_env;|extern struct itoGsEnv screen_env;|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM AS MATRIZES DE TEXTO CORRETAS DE REDE:
+          # 4. REMOVE O BLOQUEIO DE PORTABILIDADE (NEWLIB/FIO ERRORS) DO PS2SDK ATUAL:
+          # Injeta a definição global de hardware -D_EE e -D_NEWLIB_VERSION no arquivo mestre do compilador
+          sed -i "1s|^|EE_CFLAGS += -D_EE -D_NEWLIB_VERSION -DNEWLIB_PORT_AWARE\n|" /usr/local/ps2dev/ps2sdk/samples/Makefile.eeglobal
+          sed -i "1s|^|EE_CFLAGS += -D_EE -D_NEWLIB_VERSION -DNEWLIB_PORT_AWARE\n|" Makefile
+          
+          # 5. REESCREVE O MAIN.C COM AS MATRIZES DE TEXTO CORRETAS DE REDE:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
