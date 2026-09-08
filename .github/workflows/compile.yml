@@ -35,7 +35,12 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM CORREÇÕES DE BOOLEANOS MAIÚSCULOS E ARRAYS DE REDE:
+          # CORREÇÃO FÍSICA DOS TIPOS DE DADOS PARA O COMPILADOR LINUX:
+          # Substitui a palavra antiga uint16 por uint16_t para o compilador aceitar a Libito
+          sed -i 's|uint16 |uint16_t |g' launchelf.h
+          sed -i 's|(uint16|(uint16_t|g' launchelf.h
+          
+          # 4. REESCREVE O MAIN.C AJUSTANDO O PONTEIRO DE LEITURA DO CONTROLE:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -43,7 +48,6 @@ jobs:
           #include "launchelf.h"
           #include <audsrv.h>
           
-          // Definições explícitas de TRUE e FALSE para compatibilidade com código antigo
           #define FALSE 0
           #define TRUE 1
           
@@ -51,12 +55,11 @@ jobs:
           extern u8 usbhdfsd_irx; extern int size_iomanX_irx, size_fileXio_irx, size_ps2dev9_irx, size_ps2atad_irx, size_ps2hdd_irx, size_ps2fs_irx, size_poweroff_irx, size_iopmod_irx, size_usbd_irx, size_usbhdfsd_irx, size_cdvd_irx, size_ps2ip_irx, size_ps2smap_irx, size_ps2ftpd_irx, size_ps2http_irx, size_dns_irx, size_vmc_fs_irx, size_freesd_irx, size_audsrv_irx;
           int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
           
-          // Definição correta das matrizes de texto da rede para evitar erros no sprintf
-          char if_conf[256]; int if_conf_len; 
+          char if_conf; int if_conf_len; 
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig[256];
+          char netConfig;
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
@@ -126,7 +129,7 @@ jobs:
           void showinfo(void) { X_drawScr(); }
           int ReadCNF(char *direlf) { return 1; }
           void Reset() { reset=TRUE; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
-          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf.path); } X_clrScr(); X_drawScr(); itoVSync(); } }
+          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf->path); } X_clrScr(); X_drawScr(); itoVSync(); } }
           int main(int argc, char *argv[]) {
               char tmp[MAX_PATH] = "";
               setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
