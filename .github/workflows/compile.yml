@@ -5,37 +5,30 @@ on:
     branches: [ "master", "main" ]
   pull_request:
     branches: [ "master", "main" ]
-  workflow_dispatch: # Permite compilar manualmente clicando no botão do GitHub
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: ps2dev/ps2dev:latest
 
     steps:
       - name: Baixar o código-fonte
         uses: actions/checkout@v4
 
-      - name: Instalar utilitários e baixar biblioteca de vídeo faltando
-        run: |
-          apk update && apk add --no-cache make sed git
-          
-          # Baixa a biblioteca gráfica oficial do PS2DEV diretamente para o seu ambiente de compilação
-          git clone https://github.com
-          cd gsKit
-          # Compila e instala a biblioteca de vídeo no sistema do GitHub
-          make && make install
-          cd ..
+      - name: Configurar ambiente oficial PS2DEV
+        uses: ps2dev/setup-ps2dev@v1
+        with:
+          packages: ps2sdk gskit
 
       - name: Configurar e Compilar Projeto
         run: |
-          # Redireciona o código antigo para usar as chamadas modernas de vídeo instaladas
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -I/usr/local/ps2dev/gsKit/include -I/usr/local/ps2dev/gsKit/ee/include\n|" Makefile
+          # Injeta a compatibilidade newlib e aponta os caminhos para o SDK e o gsKit oficial
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -I\$(PS2DEV)/gsKit/include -I\$(PS2DEV)/gsKit/ee/include\n|" Makefile
           
-          # Substitui a chamada do ito.h pelo cabeçalho padrão de vídeo do PS2
+          # Ajusta a chamada do cabeçalho de vídeo para usar o padrão universal do sistema
           sed -i 's|<ito.h>|<gsKit.h>|g' launchelf.h
           
-          # Executa a compilação
+          # Executa a compilação principal
           make
 
       - name: Disponibilizar o arquivo ELF Pronto para Download
