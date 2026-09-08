@@ -18,12 +18,14 @@ jobs:
 
       - name: Instalar o utilitário Make
         run: |
-          apk update && apk add --no-cache make
+          apk update && apk add --no-cache make sed
 
       - name: Compilar Projeto Completo LbFn ELF
         run: |
-          # Injeta os parâmetros de compatibilidade legada e inclui os caminhos das pastas modificadas
-          export EE_CFLAGS="-DNEWLIB_PORT_AWARE -ILibito0.2.1modify -I."
+          # Modifica o Makefile inserindo a compatibilidade newlib e as pastas das bibliotecas modificadas
+          sed -i '1s/^/EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -ILibito0.2.1modify -I.\n/' Makefile
+          
+          # Executa a compilação limpa
           make
           
       - name: Disponibilizar o arquivo ELF Pronto para Download
