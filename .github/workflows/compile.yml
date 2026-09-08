@@ -22,23 +22,22 @@ jobs:
 
       - name: Injetar Sincronismo contra Tela Preta e Falhas Piscantes
         run: |
-          # 1. Copia todos os arquivos .h e .c da Libito modificado direto para a raiz
+          # 1. Copia todos os arquivos da biblioteca modificada para a raiz
           cp -r Libito0.2.1modify/* . || true
           cp Libito0.2.1modify/*.h . || true
           
-          # 2. Faz o mesmo com a pasta do loader por segurança
+          # 2. Copia os arquivos também para a pasta do loader por segurança
           mkdir -p loader
           cp -r Libito0.2.1modify/* loader/ || true
           cp Libito0.2.1modify/*.h loader/ || true
           
-          # 3. Altera cirurgicamente a linha do erro para buscar o arquivo localmente com aspas ""
-          sed -i 's|<ito.h>|"ito.h"|g' launchelf.h
-          sed -i 's|<itoglobal.h>|"itoglobal.h"|g' launchelf.h
+          # 3. APAGA COMPLETAMENTE a linha 24 que causa o erro de falta do arquivo ito.h
+          sed -i '24d' launchelf.h
           
-          # 4. Injeta a compatibilidade newlib legada no topo do Makefile local
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I.\n|" Makefile
+          # 4. Ajusta o Makefile para aceitar as inclusões locais na raiz
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -ILibito0.2.1modify\n|" Makefile
           
-          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) para sumir com as piscadas
+          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador
           sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
