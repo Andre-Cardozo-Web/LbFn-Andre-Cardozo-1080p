@@ -35,23 +35,10 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # LIMPEZA TOTAL E COMPLETA DE RE-DECLARAÇÕES DE MÍDIA NO ARQUIVO CD.H:
+          # NEUTRALIZAÇÃO DEFINITIVA DO ARQUIVO CD.H CONFLITANTE:
+          # Renomeia o arquivo para que o compilador use a libcdvd oficial do sistema sem colisões
           if [ -f cd.h ]; then
-            # Comenta todas as definições legadas e enums de detecção de mídia que colidem com o PS2SDK atual
-            sed -i 's|#define cdGetDiscType|// #define cdGetDiscType|g' cd.h
-            sed -i 's|CDVD_TYPE_ILLEGAL|// CDVD_TYPE_ILLEGAL|g' cd.h
-            sed -i 's|CDVD_TYPE_CDDA|// CDVD_TYPE_CDDA|g' cd.h
-            sed -i 's|CDVD_TYPE_DVDVIDEO|// CDVD_TYPE_DVDVIDEO|g' cd.h
-            sed -i 's|CDVD_TYPE_PS2DVD|// CDVD_TYPE_PS2DVD|g' cd.h
-            sed -i 's|CDVD_TYPE_PS2CD|// CDVD_TYPE_PS2CD|g' cd.h
-            sed -i 's|CDVD_TYPE_PS2CDDA|// CDVD_TYPE_PS2CDDA|g' cd.h
-            sed -i 's|CDVD_TYPE_PS1CD|// CDVD_TYPE_PS1CD|g' cd.h
-            sed -i 's|CDVD_TYPE_PS1CDDA|// CDVD_TYPE_PS1CDDA|g' cd.h
-            sed -i 's|CDVD_TYPE_UNKNOWN|// CDVD_TYPE_UNKNOWN|g' cd.h
-            sed -i 's|CDVD_TYPE_DETECT_DVDSINGLE|// CDVD_TYPE_DETECT_DVDSINGLE|g' cd.h
-            sed -i 's|CDVD_TYPE_DETECT_DVDUAL|// CDVD_TYPE_DETECT_DVDUAL|g' cd.h
-            sed -i 's|CDVD_TYPE_DETECT|// CDVD_TYPE_DETECT|g' cd.h
-            sed -i 's|CdvdDiscType_t cdGetDiscType(void);|// CdvdDiscType_t cdGetDiscType(void);|g' cd.h
+            mv cd.h cd_velho.h
           fi
           
           # CORREÇÃO FÍSICA DOS TIPOS DE DADOS PARA O COMPILADOR LINUX MODERNO:
@@ -61,7 +48,7 @@ jobs:
           sed -i 's|uint64|u64|g' launchelf.h
           sed -i 's|extern itoGsEnv screen_env;|extern struct itoGsEnv screen_env;|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM A MATRIZ DE TEXTO CORRETA DE REDE:
+          # 4. REESCREVE O MAIN.C COM AS MATRIZES DE TEXTO CORRETAS DE REDE:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
