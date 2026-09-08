@@ -22,16 +22,14 @@ jobs:
 
       - name: Injetar Sincronismo contra Tela Preta e Falhas Piscantes
         run: |
-          # 1. Corrige as rotas de inclusão no Makefile principal para a pasta correta da Libito
-          sed -i "1s|^|EE_INCS += -ILbFn-Andre-Cardozo-1080p-master/Libito0.2.1modify -I. -ILibito0.2.1modify\nEE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" LbFn-Andre-Cardozo-1080p-master/Makefile
+          # 1. Corrige as rotas de inclusão no Makefile na raiz para a pasta Libito
+          sed -i "1s|^|EE_INCS += -ILibito0.2.1modify -I.\nEE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" Makefile
           
           # 2. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador antes do build
-          # Isso impede o estouro de buffer de VRAM que gerava as telas pretas e as piscadas grotescas
-          sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' LbFn-Andre-Cardozo-1080p-master/viewer.c
+          sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
         run: |
-          cd LbFn-Andre-Cardozo-1080p-master
           make clean
           make
 
@@ -40,5 +38,5 @@ jobs:
         with:
           name: LbFn-AndreCardozo-Optimized-ELF
           path: |
-            LbFn-Andre-Cardozo-1080p-master/*.ELF
-            LbFn-Andre-Cardozo-1080p-master/*.elf
+            *.ELF
+            *.elf
