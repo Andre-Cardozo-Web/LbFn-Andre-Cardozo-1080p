@@ -16,18 +16,19 @@ jobs:
       - name: Baixar o código-fonte
         uses: actions/checkout@v4
 
-      - name: Instalar utilitários adicionais
+      - name: Instalar o utilitário Make
         run: |
-          apk update && apk add --no-cache make sed findutils
+          apk update && apk add --no-cache make sed
 
-      - name: Mapear pastas de inclusão e Compilar Projeto
+      - name: Configurar e Compilar Projeto
         run: |
-          # Procura a pasta real onde o arquivo ito.h está guardado no seu repositório
-          ITO_DIR=$(dirname $(find . -name "ito.h" | head -n 1))
-          echo "Pasta encontrada para o ito.h: $ITO_DIR"
+          # Adiciona caminhos genéricos e compatibilidade newlib direto no Makefile
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -Ilibito -ILibito -ILibito0.2.1modify\n|" Makefile
           
-          # Injeta as flags de compatibilidade e os caminhos dinamicamente no topo do Makefile
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I$ITO_DIR -I. -ILibito0.2.1modify\n|" Makefile
+          # Mostra os arquivos do repositório no log para sabermos o que está faltando
+          echo "=== LISTA DE ARQUIVOS NO REPOSITÓRIO ==="
+          ls -R
+          echo "========================================"
           
           # Executa a compilação
           make
