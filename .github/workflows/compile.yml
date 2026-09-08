@@ -35,7 +35,7 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM ABSTRAÇÃO DE ESCOPO COMPLETA:
+          # 4. REESCREVE O MAIN.C COM ESTRUTURAS DE ÁUDIO E VÍDEO COMPATÍVEIS COM O SDK ATUAL:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -45,6 +45,18 @@ jobs:
           extern void usbhdfsd_irx; extern int size_iomanX_irx, size_fileXio_irx, size_ps2dev9_irx, size_ps2atad_irx, size_ps2hdd_irx, size_ps2fs_irx, size_poweroff_irx, size_iopmod_irx, size_usbd_irx, size_usbhdfsd_irx, size_cdvd_irx, size_ps2ip_irx, size_ps2smap_irx, size_ps2ftpd_irx, size_ps2http_irx, size_dns_irx, size_vmc_fs_irx, size_freesd_irx, size_audsrv_irx;
           int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
           char if_conf; int if_conf_len; char ip="192.168.0.10", netmask="255.255.255.0", gw="192.168.0.1", netConfig;
+          
+          // Declarações externas para o compilador encontrar no viewer ou no core
+          extern int redraw, fieldbuffers;
+          extern void drawMsg(const char *msg);
+          extern void itoDI(void);
+          extern void X_clrScr(u64 color);
+          extern void X_drawScr(void);
+          extern void FreeFontAscii(void);
+          extern void FreeFontKanji(void);
+          extern void FreeLanguage(void);
+          extern void RunLoaderElf(char *filename, char *party);
+          
           void PS2Browser(void) { __asm__ __volatile__("li $3, 0x04; syscall; nop;"); }
           void FormatMemoryCard(void) { MessageBox("FormatMC Desativado", "Format", MB_OK); }
           static void getIpConfig(void) { sprintf(netConfig, "Net: %s", ip); }
@@ -85,25 +97,33 @@ jobs:
               char *ext = strrchr(path, '.');
               if (ext && (!stricmp(ext, ".nes") || !stricmp(ext, ".NES"))) {
                   drawMsg("Iniciando QuickNES (44100Hz)...");
-                  loadSoundModules(); audsrv_set_format(44100, 16, 2);
+                  loadSoundModules();
+                  
+                  // Adaptação oficial do formato de áudio para o PS2SDK moderno (struct)
+                  audsrv_fmt_t som_hifi;
+                  som_hifi.freq = 44100;
+                  som_hifi.bits = 16;
+                  som_hifi.channels = 2;
+                  audsrv_set_format(&som_hifi);
+                  
                   extern int quicknes_boot_rom(const char *rom_path);
                   char *p_path = (char *)path;
                   quicknes_boot_rom(p_path); redraw = fieldbuffers; return;
               }
-              itoDI(); clrScr(0); drawScr(); FreeFontAscii(); FreeFontKanji(); FreeLanguage(); free(setting); padPortClose(0,0);
+              itoDI(); X_clrScr(0); X_drawScr(); FreeFontAscii(); FreeFontKanji(); FreeLanguage(); free(setting); padPortClose(0,0);
               char *p_path2 = (char *)path;
               RunLoaderElf(p_path2, NULL);
           }
-          void showfont(void) { drawScr(); }
-          void showinfo(void) { drawScr(); }
+          void showfont(void) { X_drawScr(); }
+          void showinfo(void) { X_drawScr(); }
           int ReadCNF(char *direlf) { return 1; }
           void Reset() { reset=true; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
-          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf[0].path[0]); } clrScr(setting->color[COLOR_BACKGROUND]); drawScr(); itoVSync(); } }
+          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf.path); } X_clrScr(setting->color[COLOR_BACKGROUND]); X_drawScr(); itoVSync(); } }
           int main(int argc, char *argv[]) {
               char tmp[MAX_PATH] = "";
               setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
               strcpy(LaunchElfDir,"mass:/"); boot = MASS_BOOT; initsbv_patches(); loadModules(); mcInit(MC_TYPE_MC); setupPad(); InitLanguage();
-              int itoInit(void); itoInit(); SetScreenPosVM(); setup_vsync(); setupito(setting->tvmode); clrScr(setting->color[COLOR_BACKGROUND]);
+              int itoInit(void); itoInit(); SetScreenPosVM(); setup_vsync(); setupito(setting->tvmode); X_clrScr(setting->color[COLOR_BACKGROUND]);
               loadSoundModules(); loadUsbMassModules(); loadConfig(tmp);
               if (setting->discControl) { loadCdModules(); } if (setting->usbkbd_flag) { loadUsbKbdModules(); } if (setting->usbmouse_flag) { loadUsbMouseModules(); }
               InitFontAscii(setting->AsciiFont); InitFontKnaji(setting->KanjiFont); SetFontMargin(CHAR_MARGIN, setting->CharMargin); SetFontMargin(LINE_MARGIN, setting->LineMargin);
