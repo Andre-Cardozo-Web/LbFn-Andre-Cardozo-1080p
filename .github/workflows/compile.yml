@@ -37,7 +37,7 @@ jobs:
           
           # LIMPEZA TOTAL E COMPLETA DE RE-DECLARAÇÕES DE MÍDIA NO ARQUIVO CD.H:
           if [ -f cd.h ]; then
-            # Apaga ou comenta todas as macros antigas que tentam sobrescrever o PS2SDK moderno
+            # Comenta todas as definições legadas e enums de detecção de mídia que colidem com o PS2SDK atual
             sed -i 's|#define cdGetDiscType|// #define cdGetDiscType|g' cd.h
             sed -i 's|CDVD_TYPE_ILLEGAL|// CDVD_TYPE_ILLEGAL|g' cd.h
             sed -i 's|CDVD_TYPE_CDDA|// CDVD_TYPE_CDDA|g' cd.h
@@ -48,6 +48,9 @@ jobs:
             sed -i 's|CDVD_TYPE_PS1CD|// CDVD_TYPE_PS1CD|g' cd.h
             sed -i 's|CDVD_TYPE_PS1CDDA|// CDVD_TYPE_PS1CDDA|g' cd.h
             sed -i 's|CDVD_TYPE_UNKNOWN|// CDVD_TYPE_UNKNOWN|g' cd.h
+            sed -i 's|CDVD_TYPE_DETECT_DVDSINGLE|// CDVD_TYPE_DETECT_DVDSINGLE|g' cd.h
+            sed -i 's|CDVD_TYPE_DETECT_DVDUAL|// CDVD_TYPE_DETECT_DVDUAL|g' cd.h
+            sed -i 's|CDVD_TYPE_DETECT|// CDVD_TYPE_DETECT|g' cd.h
             sed -i 's|CdvdDiscType_t cdGetDiscType(void);|// CdvdDiscType_t cdGetDiscType(void);|g' cd.h
           fi
           
@@ -58,7 +61,7 @@ jobs:
           sed -i 's|uint64|u64|g' launchelf.h
           sed -i 's|extern itoGsEnv screen_env;|extern struct itoGsEnv screen_env;|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C ALINHANDO OS TIPOS GRÁFICOS DO FILTRO ANTI-FLICKER:
+          # 4. REESCREVE O MAIN.C COM A MATRIZ DE TEXTO CORRETA DE REDE:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
