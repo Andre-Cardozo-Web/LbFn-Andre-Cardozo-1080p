@@ -1,4 +1,4 @@
-name: Compilar LbFn Otimizado PS2 ELF
+name: Compilar LbFn com QuickNES
 
 on:
   push:
@@ -24,27 +24,46 @@ jobs:
           repository: ps2homebrew/wLaunchELF
           path: base_uLE
 
+      - name: Baixar Core QuickNES Oficial (Libretro)
+        uses: actions/checkout@v4
+        with:
+          repository: libretro/QuickNES-Core
+          path: quicknes_core
+
       - name: Instalar utilitários de sistema
         run: |
           apk update && apk add --no-cache make sed
 
-      - name: Injetar a Correção do Emulador e Compilar
+      - name: Vincular QuickNES e Compilar Unificado
         run: |
-          # Copia o SEU arquivo viewer.c corrigido por cima da base oficial estável
-          cp seu_codigo/viewer.c base_uLE/src/viewer.c || cp seu_codigo/LbFn-Andre-Cardozo-1080p-master/viewer.c base_uLE/src/viewer.c || true
+          # Estrutura a pasta do QuickNES dentro do ambiente de compilação
+          mkdir -p base_uLE/src/quicknes
+          cp -r quicknes_core/* base_uLE/src/quicknes/
+          
+          # Injeta o seu viewer.c corrigido por cima da base oficial
+          cp seu_codigo/viewer.c base_uLE/src/viewer.c
+          
+          # Cria um arquivo ito.h virtual para manter a compatibilidade com o seu código enviado
+          echo '#define itoNoVSync()' > base_uLE/src/ito.h
+          echo '#define itoVSync()' >> base_uLE/src/ito.h
+          echo '#define itoGsFinish()' >> base_uLE/src/ito.h
+          echo '#define itoPoint(p, x, y, z)' >> base_uLE/src/ito.h
           
           cd base_uLE
           
-          # Injeta a flag de compatibilidade necessária para o SDK moderno
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" Makefile
+          # Configura as flags globais de compilação diretamente no Makefile
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -Isrc -Isrc/quicknes\n|" Makefile
           
-          # Executa a compilação oficial estável
+          # Desativa chamadas de drivers ausentes que causam falhas de linkagem externa
+          sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' src/launchelf.h
+          
+          # Executa a compilação geral do ELF unificado
           make
 
-      - name: Disponibilizar o arquivo ELF Pronto para Download
+      - name: Disponibilizar o arquivo ELF com QuickNES
         uses: actions/upload-artifact@v4
         with:
-          name: LbFn-NES-Optimized-ELF
+          name: LbFn-QuickNES-PS2-ELF
           path: |
             base_uLE/*.ELF
             base_uLE/*.elf
