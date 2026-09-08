@@ -31,20 +31,23 @@ jobs:
           cp -r Libito0.2.1modify/* loader/ || true
           cp Libito0.2.1modify/*.h loader/ || true
           
-          # 3. Resolve os cabeçalhos ausentes e inclui a biblioteca de CD/DVD moderna no launchelf.h
+          # 3. Resolve os cabeçalhos ausentes e remove o conflito de redifinição de funções de CD/DVD
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
+          # Remove a redefinição conflitante da função de disco no arquivo antigo cd.h do mod
+          if [ -f cd.h ]; then
+            sed -i 's|#define cdGetDiscType|// #define cdGetDiscType|g' cd.h
+          fi
+          
           # CORREÇÃO FÍSICA DOS TIPOS DE DADOS PARA O COMPILADOR LINUX MODERNO:
-          # Substitui os tipos antigos uint16 e uint64 pelas versões estáveis u16 e u64
           sed -i 's|uint16_t|u16|g' launchelf.h
           sed -i 's|uint16|u16|g' launchelf.h
           sed -i 's|uint64_t|u64|g' launchelf.h
           sed -i 's|uint64|u64|g' launchelf.h
-          # Corrige o tipo itoGsEnv adicionando a palavra struct exigida pelo GCC moderno
           sed -i 's|extern itoGsEnv screen_env;|extern struct itoGsEnv screen_env;|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM AS MATRIZES DE TEXTO COMPLETAMENTE FORMATADAS:
+          # 4. REESCREVE O MAIN.C COM A DECLARAÇÃO CORRETA DO DRIVER DE REDE (size_ps2ip_irx):
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -63,7 +66,7 @@ jobs:
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig[256]; // Array alocado corretamente com tamanho estático de buffer
+          char netConfig[128];
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
@@ -90,7 +93,7 @@ jobs:
           void load_ps2atad(void) { int r; X_SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, &r); }
           void load_ps2hdd(void) { int r; X_SifExecModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, 0, NULL, &r); }
           void load_ps2fs(void) { int r; X_SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &r); }
-          void load_ps2ip(void) { int r; X_SifExecModuleBuffer(&ps2ip_irx, size_ip_irx, 0, NULL, &r); }
+          void load_ps2ip(void) { int r; X_SifExecModuleBuffer(&ps2ip_irx, size_ps2ip_irx, 0, NULL, &r); }
           void load_ps2smap(void) { int r; X_SifExecModuleBuffer(&ps2smap_irx, size_ps2smap_irx, 0, NULL, &r); }
           void load_ps2ftpd(void) { int r; X_SifExecModuleBuffer(&ps2ftpd_irx, size_ps2ftpd_irx, 0, NULL, &r); }
           void load_ps2http(void) { int r; X_SifExecModuleBuffer(&ps2http_irx, size_ps2http_irx, 0, NULL, &r); }
