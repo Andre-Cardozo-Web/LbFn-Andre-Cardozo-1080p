@@ -35,7 +35,7 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # Remove a redefinição conflitante da função de disco no arquivo antigo cd.h do mod
+          # Desativa a redefinição conflitante da função de disco no arquivo antigo cd.h do mod
           if [ -f cd.h ]; then
             sed -i 's|#define cdGetDiscType|// #define cdGetDiscType|g' cd.h
           fi
@@ -47,7 +47,7 @@ jobs:
           sed -i 's|uint64|u64|g' launchelf.h
           sed -i 's|extern itoGsEnv screen_env;|extern struct itoGsEnv screen_env;|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM A DECLARAÇÃO CORRETA DO DRIVER DE REDE (size_ps2ip_irx):
+          # 4. REESCREVE O MAIN.C COM CORREÇÕES DE TIPOS GRÁFICOS:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -62,7 +62,7 @@ jobs:
           extern u8 usbhdfsd_irx; extern int size_iomanX_irx, size_fileXio_irx, size_ps2dev9_irx, size_ps2atad_irx, size_ps2hdd_irx, size_ps2fs_irx, size_poweroff_irx, size_iopmod_irx, size_usbd_irx, size_usbhdfsd_irx, size_cdvd_irx, size_ps2ip_irx, size_ps2smap_irx, size_ps2ftpd_irx, size_ps2http_irx, size_dns_irx, size_vmc_fs_irx, size_freesd_irx, size_audsrv_irx;
           int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
           
-          char if_conf; int if_conf_len; 
+          char if_conf[64]; int if_conf_len; 
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
@@ -71,8 +71,8 @@ jobs:
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
           extern void itoDI(void);
-          extern void X_clrScr(void);
-          extern void X_drawScr(void);
+          extern void clrScr(u64 color); // Corrigido para corresponder à função original
+          extern void drawScr(void);
           extern void FreeFontAscii(void);
           extern void FreeFontKanji(void);
           extern void FreeLanguage(void);
@@ -128,20 +128,20 @@ jobs:
                   char *p_path = (char *)path;
                   quicknes_boot_rom(p_path); redraw = fieldbuffers; return;
               }
-              itoDI(); X_clrScr(); X_drawScr(); FreeFontAscii(); FreeFontKanji(); FreeLanguage(); free(setting); padPortClose(0,0);
+              itoDI(); clrScr(0); drawScr(); FreeFontAscii(); FreeFontKanji(); FreeLanguage(); free(setting); padPortClose(0,0);
               char *p_path2 = (char *)path;
               RunLoaderElf(p_path2, NULL);
           }
-          void showfont(void) { X_drawScr(); }
-          void showinfo(void) { X_drawScr(); }
+          void showfont(void) { drawScr(); }
+          void showinfo(void) { drawScr(); }
           int ReadCNF(char *direlf) { return 1; }
           void Reset() { reset=TRUE; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
-          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf("mass:/quicknes/Monster in My Pocket (USA).nes"); } X_clrScr(); X_drawScr(); itoVSync(); } }
+          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf("mass:/quicknes/Monster in My Pocket (USA).nes"); } clrScr(setting->color[COLOR_BACKGROUND]); drawScr(); itoVSync(); } }
           int main(int argc, char *argv[]) {
               char tmp[MAX_PATH] = "";
               setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
               strcpy(LaunchElfDir,"mass:/"); boot = MASS_BOOT; initsbv_patches(); loadModules(); mcInit(MC_TYPE_MC); setupPad(); InitLanguage();
-              int itoInit(void); itoInit(); SetScreenPosVM(); setup_vsync(); setupito(setting->tvmode); X_clrScr();
+              int itoInit(void); itoInit(); SetScreenPosVM(); setup_vsync(); setupito(setting->tvmode); clrScr(setting->color[COLOR_BACKGROUND]);
               loadSoundModules(); loadUsbMassModules(); loadConfig(tmp);
               if (setting->discControl) { loadCdModules(); } if (setting->usbkbd_flag) { loadUsbKbdModules(); } if (setting->usbmouse_flag) { loadUsbMouseModules(); }
               InitFontAscii(setting->AsciiFont); InitFontKnaji(setting->KanjiFont); SetFontMargin(CHAR_MARGIN, setting->CharMargin); SetFontMargin(LINE_MARGIN, setting->LineMargin);
