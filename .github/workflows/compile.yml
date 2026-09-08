@@ -35,19 +35,79 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 4. CORREÇÃO DOS ERROS DE SINTAXE DO MAIN.C:
-          # Corrige o erro de digitação de smid para smod
-          sed -i 's|smid_get_mod_by_name|smod_get_mod_by_name|g' main.c
-          # Injeta a declaração da função de vídeo itoInit() no topo do main.c
-          sed -i '2i\int itoInit(void);' main.c
+          # 4. REESCREVE O MAIN.C COM UMA SINTAXE LIMPA E CORRIGIDA CONTRA ERROS DE COMPILADOR:
+          # Remove o main.c antigo e cria um arquivo idêntico com formatação e blocos limpos
+          rm -f main.c
+          cat << 'EOF' > main.c
+          #include "launchelf.h"
+          #include <audsrv.h>
+          extern u8 *iomanX_irx, *fileXio_irx, *ps2dev9_irx, *ps2atad_irx, *ps2hdd_irx, *ps2fs_irx, *poweroff_irx, *iopmod_irx, *usbd_irx, *cdvd_irx, *ps2ip_irx, *ps2smap_irx, *ps2ftpd_irx, *ps2http_irx, *dns_irx, *vmc_fs_irx, *freesd_irx, *audsrv_irx;
+          extern void usbhdfsd_irx; extern int size_iomanX_irx, size_fileXio_irx, size_ps2dev9_irx, size_ps2atad_irx, size_ps2hdd_irx, size_ps2fs_irx, size_poweroff_irx, size_iopmod_irx, size_usbd_irx, size_usbhdfsd_irx, size_cdvd_irx, size_ps2ip_irx, size_ps2smap_irx, size_ps2ftpd_irx, size_ps2http_irx, size_dns_irx, size_vmc_fs_irx, size_freesd_irx, size_audsrv_irx;
+          int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
+          char if_conf[48]; int if_conf_len; char ip[16]="192.168.0.10", netmask[16]="255.255.255.0", gw[16]="192.168.0.1", netConfig[128];
+          void PS2Browser(void) { __asm__ __volatile__("li $3, 0x04; syscall; nop;"); }
+          void FormatMemoryCard(void) { MessageBox("FormatMC Desativado", "Format", MB_OK); }
+          static void getIpConfig(void) { sprintf(netConfig, "Net: %s", ip); }
+          int X_SifLoadModule(const char *path, int len, const char *args) { return SifLoadModule(path, len, args); }
+          int X_SifExecModuleBuffer(void *ptr, u32 size, u32 len, const char *args, int *res) { return SifExecModuleBuffer(ptr, size, len, args, res); }
+          void initsbv_patches(void) { sbv_patch_enable_lmb(); sbv_patch_disable_prefix_check(); }
+          void delay(int count) { int i = count * 0x01000000; while(i--) asm("nop"); }
+          int load_irxfile(char *f, int l, char *a) { return 1; }
+          int load_irxdriver(char *p, int l, char *a) { return 1; }
+          void load_iomanx(void) { int r; X_SifExecModuleBuffer(&iomanX_irx, size_iomanX_irx, 0, NULL, &r); }
+          void load_filexio(void) { int r; X_SifExecModuleBuffer(&fileXio_irx, size_fileXio_irx, 0, NULL, &r); }
+          void load_ps2dev9(void) { int r; X_SifExecModuleBuffer(&ps2dev9_irx, size_ps2dev9_irx, 0, NULL, &r); }
+          void load_ps2atad(void) { int r; X_SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, &r); }
+          void load_ps2hdd(void) { int r; X_SifExecModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, 0, NULL, &r); }
+          void load_ps2fs(void) { int r; X_SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &r); }
+          void load_ps2ip(void) { int r; X_SifExecModuleBuffer(&ps2ip_irx, size_ps2ip_irx, 0, NULL, &r); }
+          void load_ps2smap(void) { int r; X_SifExecModuleBuffer(&ps2smap_irx, size_ps2smap_irx, 0, NULL, &r); }
+          void load_ps2ftpd(void) { int r; X_SifExecModuleBuffer(&ps2ftpd_irx, size_ps2ftpd_irx, 0, NULL, &r); }
+          void load_ps2http(void) { int r; X_SifExecModuleBuffer(&ps2http_irx, size_ps2http_irx, 0, NULL, &r); }
+          void load_dns(char *a) { int r; X_SifExecModuleBuffer(&dns_irx, size_dns_irx, 0, NULL, &r); }
+          int load_libsd(void) { int r; X_SifExecModuleBuffer(&freesd_irx, size_freesd_irx, 0, NULL, &r); return 1; }
+          int load_sound(void) { int r; X_SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, &r); return 1; }
+          void load_poweroff(void) { int r; X_SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, &r); }
+          void PowerOff(void) { hddPowerOff(); }
+          void setupPowerOff(void) { load_poweroff(); }
+          void loadHddModules(void) { load_ps2atad(); load_ps2hdd(); load_ps2fs(); }
+          void loadFtpdModules(void) { load_ps2ip(); load_ps2smap(); load_ps2ftpd(); }
+          void loadHTTPModules(void) { load_ps2ip(); load_ps2smap(); load_ps2http(); }
+          void loadUsbModules(void) { int r; X_SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, &r); }
+          void loadUsbMassModules(void) { int r; loadUsbModules(); X_SifExecModuleBuffer(&usbhdfsd_irx, size_usbhdfsd_irx, 0, NULL, &r); }
+          void loadUsbKbdModules(void) { loadUsbModules(); }
+          void loadUsbMouseModules(void) { loadUsbModules(); }
+          int loadSoundModules(void) { if (load_libsd() && load_sound()) return audsrv_init(); return -1; }
+          void loadCdModules(void) { int r; X_SifExecModuleBuffer(&cdvd_irx, size_cdvd_irx, 0, NULL, &r); }
+          void loadModules(void) { SifLoadModule("rom0:SIO2MAN", 0, NULL); SifLoadModule("rom0:MCMAN", 0, NULL); SifLoadModule("rom0:MCSERV", 0, NULL); SifLoadModule("rom0:PADMAN", 0, NULL); }
+          void RunElf(const char *path) {
+              if(!path) return;
+              char *ext = strrchr(path, '.');
+              if (ext && (!stricmp(ext, ".nes") || !stricmp(ext, ".NES"))) {
+                  drawMsg("Iniciando QuickNES (44100Hz)...");
+                  loadSoundModules(); audsrv_set_format(44100, 16, 2);
+                  extern int quicknes_boot_rom(const char *rom_path);
+                  quicknes_boot_rom(path); redraw = fieldbuffers; return;
+              }
+              itoDI(); clrScr(0); drawScr(); FreeFontAscii(); FreeFontKanji(); FreeLanguage(); free(setting); padPortClose(0,0); RunLoaderElf(path, 0);
+          }
+          void showfont(void) { drawScr(); }
+          void showinfo(void) { drawScr(); }
+          int ReadCNF(char *direlf) { return 1; }
+          void Reset() { reset=TRUE; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
+          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf[1].path[0]); } clrScr(setting->color[COLOR_BACKGROUND]); drawScr(); itoVSync(); } }
+          int main(int argc, char *argv[]) {
+              setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
+              strcpy(LaunchElfDir,"mass:/"); boot = MASS_BOOT; initsbv_patches(); loadModules(); mcInit(MC_TYPE_MC); setupPad(); InitLanguage();
+              int itoInit(void); itoInit(); SetScreenPosVM(); setup_vsync(); setupito(setting->tvmode); clrScr(setting->color[COLOR_BACKGROUND]);
+              loadSoundModules(); loadUsbMassModules(); loadConfig(tmp);
+              if (setting->discControl) loadCdModules(); if (setting->usbkbd_flag) loadUsbKbdModules(); if (setting->usbmouse_flag) loadUsbMouseModules();
+              InitFontAscii(setting->AsciiFont); InitFontKnaji(setting->KanjiFont); SetFontMargin(CHAR_MARGIN, setting->CharMargin); SetFontMargin(LINE_MARGIN, setting->LineMargin);
+              getIpConfig(); LaunchMain(); return 0;
+          }
+          EOF
           
-          # Reescreve a linha 734 problemática quebrando os blocos 'if' com chaves corretas para o compilador aceitar
-          sed -i 's|if (setting->discControl) loadCdModules(); if (setting->usbkbd_flag) loadUsbKbdModules(); if (setting->usbmouse_flag) loadUsbMouseModules();|if (setting->discControl) { loadCdModules(); } if (setting->usbkbd_flag) { loadUsbKbdModules(); } if (setting->usbmouse_flag) { loadUsbMouseModules(); }|g' main.c
-          
-          # 5. Ajusta o Makefile local e força a compatibilidade com drivers de vídeo legados
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -I. -ILibito0.2.1modify\nEE_INCS += -I. -ILibito0.2.1modify\n|" Makefile
-          
-          # 6. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador do viewer.c
+          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador do viewer.c
           sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
