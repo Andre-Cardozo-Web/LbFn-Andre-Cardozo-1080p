@@ -1,4 +1,4 @@
-name: Compilar LbFn com QuickNES
+name: Compilar LbFn Andre Cardozo 1080p
 
 on:
   push:
@@ -13,57 +13,32 @@ jobs:
     container: ps2dev/ps2dev:latest
 
     steps:
-      - name: Baixar o seu código-fonte
+      - name: Baixar o código-fonte do Repositório
         uses: actions/checkout@v4
-        with:
-          path: seu_codigo
 
-      - name: Baixar Base Limpa do LaunchELF Oficial
-        uses: actions/checkout@v4
-        with:
-          repository: ps2homebrew/wLaunchELF
-          path: base_uLE
-
-      - name: Baixar Core QuickNES Oficial (Link Corrigido)
-        uses: actions/checkout@v4
-        with:
-          repository: libretro/QuickNES_Core
-          path: quicknes_core
-
-      - name: Instalar utilitários de sistema
+      - name: Instalar utilitários de compilação
         run: |
           apk update && apk add --no-cache make sed
 
-      - name: Vincular QuickNES e Compilar Unificado
+      - name: Injetar Sincronismo contra Tela Preta e Falhas Piscantes
         run: |
-          # Estrutura a pasta do QuickNES dentro do ambiente de compilação
-          mkdir -p base_uLE/quicknes
-          cp -r quicknes_core/* base_uLE/quicknes/
+          # 1. Corrige as rotas de inclusão no Makefile principal para a pasta correta da Libito
+          sed -i "1s|^|EE_INCS += -ILbFn-Andre-Cardozo-1080p-master/Libito0.2.1modify -I. -ILibito0.2.1modify\nEE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" LbFn-Andre-Cardozo-1080p-master/Makefile
           
-          # Injeta o seu viewer.c corrigido por cima da base oficial
-          cp seu_codigo/viewer.c base_uLE/viewer.c
-          
-          # Cria um arquivo ito.h virtual para manter a compatibilidade com o seu código enviado
-          echo '#define itoNoVSync()' > base_uLE/ito.h
-          echo '#define itoVSync()' >> base_uLE/ito.h
-          echo '#define itoGsFinish()' >> base_uLE/ito.h
-          echo '#define itoPoint(p, x, y, z)' >> base_uLE/ito.h
-          
-          cd base_uLE
-          
-          # Configura as flags globais de compilação diretamente no Makefile
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -I. -Iquicknes\n|" Makefile
-          
-          # Desativa chamadas de drivers ausentes apontando para a raiz correta do arquivo
-          sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
-          
-          # Executa a compilação geral do ELF unificado
+          # 2. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador antes do build
+          # Isso impede o estouro de buffer de VRAM que gerava as telas pretas e as piscadas grotescas
+          sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' LbFn-Andre-Cardozo-1080p-master/viewer.c
+
+      - name: Compilar Projeto Completo LbFn ELF
+        run: |
+          cd LbFn-Andre-Cardozo-1080p-master
+          make clean
           make
 
-      - name: Disponibilizar o arquivo ELF com QuickNES
+      - name: Disponibilizar o arquivo LbFn ELF Pronto para Download
         uses: actions/upload-artifact@v4
         with:
-          name: LbFn-QuickNES-PS2-ELF
+          name: LbFn-AndreCardozo-Optimized-ELF
           path: |
-            base_uLE/*.ELF
-            base_uLE/*.elf
+            LbFn-Andre-Cardozo-1080p-master/*.ELF
+            LbFn-Andre-Cardozo-1080p-master/*.elf
