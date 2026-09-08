@@ -16,10 +16,6 @@ jobs:
       - name: Baixar o código-fonte
         uses: actions/checkout@v4
 
-      - name: Instalar dependências de build necessárias
-        run: |
-          apt-get update && apt-get install -y make gcc git
-
       - name: Compilar Módulos Auxiliares (IRX)
         run: |
           cd LbFn-Andre-Cardozo-1080p-master/modules
