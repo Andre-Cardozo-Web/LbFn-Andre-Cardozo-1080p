@@ -22,20 +22,23 @@ jobs:
 
       - name: Injetar Sincronismo contra Tela Preta e Falhas Piscantes
         run: |
-          # 1. Copia todos os arquivos .h e .c da Libito direto para a raiz para o compilador achar de primeira
+          # 1. Copia todos os arquivos .h e .c da Libito modificado direto para a raiz
           cp -r Libito0.2.1modify/* . || true
+          cp Libito0.2.1modify/*.h . || true
           
-          # 2. Copia os arquivos também para dentro da pasta do loader por segurança
+          # 2. Faz o mesmo com a pasta do loader por segurança
           mkdir -p loader
           cp -r Libito0.2.1modify/* loader/ || true
+          cp Libito0.2.1modify/*.h loader/ || true
           
-          # 3. Força a inclusão da raiz atual no arquivo global do compilador PS2DEV no sistema do GitHub
-          sed -i "1s|^|EE_INCS += -I. -I./Libito0.2.1modify\nEE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" /usr/local/ps2dev/ps2sdk/samples/Makefile.eeglobal
+          # 3. Altera cirurgicamente a linha do erro para buscar o arquivo localmente com aspas ""
+          sed -i 's|<ito.h>|"ito.h"|g' launchelf.h
+          sed -i 's|<itoglobal.h>|"itoglobal.h"|g' launchelf.h
           
-          # 4. Injeta a compatibilidade newlib legada diretamente no topo do Makefile local
+          # 4. Injeta a compatibilidade newlib legada no topo do Makefile local
           sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I.\n|" Makefile
           
-          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador antes do build
+          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) para sumir com as piscadas
           sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
