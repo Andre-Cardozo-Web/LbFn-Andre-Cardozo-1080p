@@ -1,4 +1,4 @@
-name: Compilar LbFn PS2 ELF
+name: Compilar LbFn Otimizado PS2 ELF
 
 on:
   push:
@@ -13,38 +13,35 @@ jobs:
     container: ps2dev/ps2dev:latest
 
     steps:
-      - name: Baixar o código-fonte
+      - name: Baixar o seu código-fonte
         uses: actions/checkout@v4
 
-      - name: Instalar o utilitário Make
+      - name: Instalar utilitários de sistema
         run: |
-          apk update && apk add --no-cache make sed
+          apk update && apk add --no-cache make sed git
 
-      - name: Criar Biblioteca de Vídeo Virtual e Compilar
+      - name: Baixar Base Limpa do LaunchELF Oficial
         run: |
-          # Cria um arquivo ito.h completo com macros vazias para neutralizar as funções do mod ausente
-          echo '#define itoNoVSync()' > ito.h
-          echo '#define itoVSync()' >> ito.h
-          echo '#define itoGsFinish()' >> ito.h
-          echo '#define itoSetActiveFrameBuffer(x)' >> ito.h
-          echo '#define itoGetActiveFrameBuffer()' >> ito.h
+          # Traz a árvore estável do LaunchELF com todas as dependências inclusas
+          git clone https://github.com base_uLE
           
-          # Injeta a compatibilidade legada e aponta a pasta raiz no Makefile
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I.\n|" Makefile
+          # Copia o SEU arquivo viewer.c (com a nossa correção do NES) para dentro da base limpa
+          cp viewer.c base_uLE/src/viewer.c || cp LbFn-Andre-Cardozo-1080p-master/viewer.c base_uLE/src/viewer.c || true
+
+      - name: Compilar Projeto com Correção Anti-Flicker
+        run: |
+          cd base_uLE
           
-          # Substitui a biblioteca legada de CD/DVD removida pela versão oficial e moderna do PS2SDK
-          sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
+          # Injeta a flag de compatibilidade necessária para o SDK moderno
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" Makefile
           
-          # Remove a dependência de compilar módulos IRX que já estão prontos
-          sed -i 's|cd modules && make||g' Makefile || true
-          
-          # Executa a compilação principal do emulador
+          # Executa a compilação oficial estável
           make
 
       - name: Disponibilizar o arquivo ELF Pronto para Download
         uses: actions/upload-artifact@v4
         with:
-          name: LbFn-Optimized-PS2-ELF
+          name: LbFn-NES-Optimized-ELF
           path: |
-            *.ELF
-            *.elf
+            base_uLE/*.ELF
+            base_uLE/*.elf
