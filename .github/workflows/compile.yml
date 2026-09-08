@@ -31,17 +31,20 @@ jobs:
           cp -r Libito0.2.1modify/* loader/ || true
           cp Libito0.2.1modify/*.h loader/ || true
           
-          # 3. APAGA COMPLETAMENTE a linha 24 antiga (que pedia o antigo ito.h)
+          # 3. Resolve os cabeçalhos ausentes e inclui a biblioteca de CD/DVD moderna no launchelf.h
           sed -i '24d' launchelf.h
-          
-          # 4. Substitui o cdvd_rpc.h antigo pela biblioteca oficial moderna do PS2SDK
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 5. Ajusta o Makefile local e força a compatibilidade com drivers antigos de vídeo (Libito)
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -I. -ILibito0.2.1modify\nEE_INCS += -I. -ILibito0.2.1modify\n|" Makefile
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" Libito0.2.1modify/Makefile || true
+          # 4. CORREÇÃO DOS ERROS DE LEITURA DO MAIN.C:
+          # Corrige o erro de digitação do desenvolvedor de smid para smod
+          sed -i 's|smid_get_mod_by_name|smod_get_mod_by_name|g' main.c
+          # Injeta a declaração da função de vídeo itoInit() no topo do main.c para o compilador aceitar
+          sed -i '2i\int itoInit(void);' main.c
           
-          # 6. Injeta o reset do barramento gráfico (V-Sync Lock) para sumir com os bugs visuais
+          # 5. Ajusta o Makefile local e força a compatibilidade com drivers de vídeo legados
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -I. -ILibito0.2.1modify\nEE_INCS += -I. -ILibito0.2.1modify\n|" Makefile
+          
+          # 6. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador do viewer.c
           sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
