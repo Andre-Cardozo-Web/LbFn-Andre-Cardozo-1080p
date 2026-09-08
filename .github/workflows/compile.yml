@@ -22,21 +22,24 @@ jobs:
 
       - name: Injetar Sincronismo contra Tela Preta e Falhas Piscantes
         run: |
-          # 1. Injeta de forma forçada a flag e a rota absoluta no topo do Makefile para achar o ito.h
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS := -I\$(PWD)/Libito0.2.1modify \$(EE_INCS)\n|" Makefile
+          # 1. Copia todos os arquivos .h e .c da Libito direto para a raiz para o compilador achar de primeira
+          cp -r Libito0.2.1modify/* . || true
           
-          # 2. Faz o mesmo ajuste no Makefile da pasta do Loader para manter o alinhamento
-          if [ -f loader/Makefile ]; then
-            sed -i "1s|^|EE_INCS := -I\$(PWD)/../Libito0.2.1modify \$(EE_INCS)\n|" loader/Makefile
-          fi
+          # 2. Copia os arquivos também para dentro da pasta do loader por segurança
+          mkdir -p loader
+          cp -r Libito0.2.1modify/* loader/ || true
           
-          # 3. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador antes do build
+          # 3. Força a inclusão da raiz atual no arquivo global do compilador PS2DEV no sistema do GitHub
+          sed -i "1s|^|EE_INCS += -I. -I./Libito0.2.1modify\nEE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" /usr/local/ps2dev/ps2sdk/samples/Makefile.eeglobal
+          
+          # 4. Injeta a compatibilidade newlib legada diretamente no topo do Makefile local
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I.\n|" Makefile
+          
+          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador antes do build
           sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
         run: |
-          # Força as variáveis globais de ambiente no terminal antes de chamar o Makefile
-          export EE_INCS="-I$(pwd)/Libito0.2.1modify -I$(pwd)"
           make clean
           make
           
