@@ -36,10 +36,13 @@ jobs:
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
           # CORREÇÃO FÍSICA DOS TIPOS DE DADOS PARA O COMPILADOR LINUX:
+          # Substitui os tipos antigos uint16 e uint64 pelas versões aceitas pelo PS2SDK atual
           sed -i 's|uint16 |uint16_t |g' launchelf.h
           sed -i 's|(uint16|(uint16_t|g' launchelf.h
+          sed -i 's|uint64 |uint64_t |g' launchelf.h
+          sed -i 's|(uint64|(uint64_t|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM AS MATRIZES DE MEMÓRIA AJUSTADAS DE REDE:
+          # 4. REESCREVE O MAIN.C COM A SINTAXE DE PONTEIROS E MATRIZES TOTALMENTE CORRIGIDA:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -54,11 +57,11 @@ jobs:
           extern u8 usbhdfsd_irx; extern int size_iomanX_irx, size_fileXio_irx, size_ps2dev9_irx, size_ps2atad_irx, size_ps2hdd_irx, size_ps2fs_irx, size_poweroff_irx, size_iopmod_irx, size_usbd_irx, size_usbhdfsd_irx, size_cdvd_irx, size_ps2ip_irx, size_ps2smap_irx, size_ps2ftpd_irx, size_ps2http_irx, size_dns_irx, size_vmc_fs_irx, size_freesd_irx, size_audsrv_irx;
           int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
           
-          char if_conf[256]; int if_conf_len; 
+          char if_conf; int if_conf_len; 
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig[256]; // Transformado em array real para receber o texto do sprintf
+          char netConfig[256];
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
