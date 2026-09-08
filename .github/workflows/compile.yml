@@ -31,13 +31,17 @@ jobs:
           cp -r Libito0.2.1modify/* loader/ || true
           cp Libito0.2.1modify/*.h loader/ || true
           
-          # 3. APAGA COMPLETAMENTE a linha 24 que causa o erro de falta do arquivo ito.h
+          # 3. APAGA COMPLETAMENTE a linha 24 antiga (que pedia o antigo ito.h)
           sed -i '24d' launchelf.h
           
-          # 4. Ajusta o Makefile para aceitar as inclusões locais na raiz
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -ILibito0.2.1modify\n|" Makefile
+          # 4. Substitui o cdvd_rpc.h antigo pela biblioteca oficial moderna do PS2SDK
+          sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador
+          # 5. Ajusta o Makefile local e força a compatibilidade com drivers antigos de vídeo (Libito)
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -I. -ILibito0.2.1modify\nEE_INCS += -I. -ILibito0.2.1modify\n|" Makefile
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\n|" Libito0.2.1modify/Makefile || true
+          
+          # 6. Injeta o reset do barramento gráfico (V-Sync Lock) para sumir com os bugs visuais
           sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
 
       - name: Compilar Projeto Completo LbFn ELF
