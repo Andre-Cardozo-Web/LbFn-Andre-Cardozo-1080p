@@ -37,7 +37,7 @@ jobs:
           
           # LIMPEZA TOTAL E COMPLETA DE RE-DECLARAÇÕES DE MÍDIA NO ARQUIVO CD.H:
           if [ -f cd.h ]; then
-            # Apaga todas as linhas de enums de mídia antigos que colidem com o PS2SDK atual
+            # Apaga ou comenta todas as macros antigas que tentam sobrescrever o PS2SDK moderno
             sed -i 's|#define cdGetDiscType|// #define cdGetDiscType|g' cd.h
             sed -i 's|CDVD_TYPE_ILLEGAL|// CDVD_TYPE_ILLEGAL|g' cd.h
             sed -i 's|CDVD_TYPE_CDDA|// CDVD_TYPE_CDDA|g' cd.h
@@ -45,6 +45,8 @@ jobs:
             sed -i 's|CDVD_TYPE_PS2DVD|// CDVD_TYPE_PS2DVD|g' cd.h
             sed -i 's|CDVD_TYPE_PS2CD|// CDVD_TYPE_PS2CD|g' cd.h
             sed -i 's|CDVD_TYPE_PS2CDDA|// CDVD_TYPE_PS2CDDA|g' cd.h
+            sed -i 's|CDVD_TYPE_PS1CD|// CDVD_TYPE_PS1CD|g' cd.h
+            sed -i 's|CDVD_TYPE_PS1CDDA|// CDVD_TYPE_PS1CDDA|g' cd.h
             sed -i 's|CdvdDiscType_t cdGetDiscType(void);|// CdvdDiscType_t cdGetDiscType(void);|g' cd.h
           fi
           
@@ -55,7 +57,7 @@ jobs:
           sed -i 's|uint64|u64|g' launchelf.h
           sed -i 's|extern itoGsEnv screen_env;|extern struct itoGsEnv screen_env;|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C CORRIGINDO DE VEZ O ARRAYS DE TEXTO DE REDE:
+          # 4. REESCREVE O MAIN.C COM A MATRIZ DE REDE TOTALMENTE COMPATIVEL:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -74,7 +76,7 @@ jobs:
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig[256]; // Array alocado corretamente com tamanho estático de buffer
+          char netConfig;
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
@@ -85,89 +87,3 @@ jobs:
           extern void FreeFontKanji(void);
           extern void FreeLanguage(void);
           extern void RunLoaderElf(char *filename, char *party);
-          void PS2Browser(void) { __asm__ __volatile__("li $3, 0x04; syscall; nop;"); }
-          void FormatMemoryCard(void) { MessageBox("FormatMC Desativado", "Format", MB_OK); }
-          static void getIpConfig(void) { sprintf(netConfig, "Net: %s", ip); }
-          int X_SifLoadModule(const char *path, int len, const char *args) { return SifLoadModule(path, len, args); }
-          int X_SifExecModuleBuffer(void *ptr, u32 size, u32 len, const char *args, int *res) { return SifExecModuleBuffer(ptr, size, len, args, res); }
-          void initsbv_patches(void) { sbv_patch_enable_lmb(); sbv_patch_disable_prefix_check(); }
-          void delay(int count) { int i = count * 0x01000000; while(i--) asm("nop"); }
-          int load_irxfile(char *f, int l, char *a) { return 1; }
-          int load_irxdriver(char *p, int l, char *a) { return 1; }
-          void load_iomanx(void) { int r; X_SifExecModuleBuffer(&iomanX_irx, size_iomanX_irx, 0, NULL, &r); }
-          void load_filexio(void) { int r; X_SifExecModuleBuffer(&fileXio_irx, size_fileXio_irx, 0, NULL, &r); }
-          void load_ps2dev9(void) { int r; X_SifExecModuleBuffer(&ps2dev9_irx, size_ps2dev9_irx, 0, NULL, &r); }
-          void load_ps2atad(void) { int r; X_SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, &r); }
-          void load_ps2hdd(void) { int r; X_SifExecModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, 0, NULL, &r); }
-          void load_ps2fs(void) { int r; X_SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &r); }
-          void load_ps2ip(void) { int r; X_SifExecModuleBuffer(&ps2ip_irx, size_ps2ip_irx, 0, NULL, &r); }
-          void load_ps2smap(void) { int r; X_SifExecModuleBuffer(&ps2smap_irx, size_ps2smap_irx, 0, NULL, &r); }
-          void load_ps2ftpd(void) { int r; X_SifExecModuleBuffer(&ps2ftpd_irx, size_ps2ftpd_irx, 0, NULL, &r); }
-          void load_ps2http(void) { int r; X_SifExecModuleBuffer(&ps2http_irx, size_ps2http_irx, 0, NULL, &r); }
-          void load_dns(char *a) { int r; X_SifExecModuleBuffer(&dns_irx, size_dns_irx, 0, NULL, &r); }
-          int load_libsd(void) { int r; X_SifExecModuleBuffer(&freesd_irx, size_freesd_irx, 0, NULL, &r); return 1; }
-          int load_sound(void) { int r; X_SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, &r); return 1; }
-          void load_poweroff(void) { int r; X_SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, &r); }
-          void PowerOff(void) { hddPowerOff(); }
-          void setupPowerOff(void) { load_poweroff(); }
-          void loadHddModules(void) { load_ps2atad(); load_ps2hdd(); load_ps2fs(); }
-          void loadFtpdModules(void) { load_ps2ip(); load_ps2smap(); load_ps2ftpd(); }
-          void loadHTTPModules(void) { load_ps2ip(); load_ps2smap(); load_ps2http(); }
-          void loadUsbModules(void) { int r; X_SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, &r); }
-          void loadUsbMassModules(void) { int r; loadUsbModules(); X_SifExecModuleBuffer(&usbhdfsd_irx, size_usbhdfsd_irx, 0, NULL, &r); }
-          void loadUsbKbdModules(void) { loadUsbModules(); }
-          void loadUsbMouseModules(void) { loadUsbModules(); }
-          int loadSoundModules(void) { if (load_libsd() && load_sound()) return audsrv_init(); return -1; }
-          void loadCdModules(void) { int r; X_SifExecModuleBuffer(&cdvd_irx, size_cdvd_irx, 0, NULL, &r); }
-          void loadModules(void) { SifLoadModule("rom0:SIO2MAN", 0, NULL); SifLoadModule("rom0:MCMAN", 0, NULL); SifLoadModule("rom0:MCSERV", 0, NULL); SifLoadModule("rom0:PADMAN", 0, NULL); }
-          void RunElf(const char *path) {
-              if(!path) return;
-              char *ext = strrchr(path, '.');
-              if (ext && (!strcasecmp(ext, ".nes") || !strcasecmp(ext, ".NES"))) {
-                  drawMsg("Iniciando QuickNES (44100Hz)...");
-                  loadSoundModules();
-                  audsrv_fmt_t som_hifi;
-                  som_hifi.freq = 44100;
-                  som_hifi.bits = 16;
-                  som_hifi.channels = 2;
-                  audsrv_set_format(&som_hifi);
-                  extern int quicknes_boot_rom(const char *rom_path);
-                  char *p_path = (char *)path;
-                  quicknes_boot_rom(p_path); redraw = fieldbuffers; return;
-              }
-              itoDI(); clrScr(0); drawScr(); FreeFontAscii(); FreeFontKanji(); FreeLanguage(); free(setting); padPortClose(0,0);
-              char *p_path2 = (char *)path;
-              RunLoaderElf(p_path2, NULL);
-          }
-          void showfont(void) { drawScr(); }
-          void showinfo(void) { drawScr(); }
-          int ReadCNF(char *direlf) { return 1; }
-          void Reset() { reset=TRUE; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
-          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf("mass:/quicknes/Monster in My Pocket (USA).nes"); } clrScr(setting->color[COLOR_BACKGROUND]); drawScr(); itoVSync(); } }
-          int main(int argc, char *argv[]) {
-              char tmp[MAX_PATH] = "";
-              setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
-              strcpy(LaunchElfDir,"mass:/"); boot = MASS_BOOT; initsbv_patches(); loadModules(); mcInit(MC_TYPE_MC); setupPad(); InitLanguage();
-              int itoInit(void); itoInit(); SetScreenPosVM(); setup_vsync(); setupito(setting->tvmode); clrScr(setting->color[COLOR_BACKGROUND]);
-              loadSoundModules(); loadUsbMassModules(); loadConfig(tmp);
-              if (setting->discControl) { loadCdModules(); } if (setting->usbkbd_flag) { loadUsbKbdModules(); } if (setting->usbmouse_flag) { loadUsbMouseModules(); }
-              InitFontAscii(setting->AsciiFont); InitFontKnaji(setting->KanjiFont); SetFontMargin(CHAR_MARGIN, setting->CharMargin); SetFontMargin(LINE_MARGIN, setting->LineMargin);
-              getIpConfig(); LaunchMain(); return 0;
-          }
-          EOF
-          
-          # 5. Injeta o reset do barramento gráfico (V-Sync Lock) direto no renderizador do viewer.c
-          sed -i 's|itoVSync();|itoNoVSync(); itoVSync();|g' viewer.c
-
-      - name: Compilar Projeto Completo LbFn ELF
-        run: |
-          make clean
-          make
-          
-      - name: Disponibilizar o arquivo LbFn ELF Pronto para Download
-        uses: actions/upload-artifact@v4
-        with:
-          name: LbFn-AndreCardozo-Optimized-ELF
-          path: |
-            *.ELF
-            *.elf
