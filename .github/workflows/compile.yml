@@ -16,12 +16,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configurar ambiente oficial PS2DEV
-        uses: ps2dev/setup-ps2dev@v1
+        uses: ps2dev/setup-ps2dev-action@v1
         with:
           packages: ps2sdk gskit
 
       - name: Configurar e Compilar Projeto
         run: |
+          # Garante que o utilitário sed esteja pronto para uso no Ubuntu
+          sudo apt-get update && sudo apt-get install -y sed
+          
           # Injeta a compatibilidade newlib e aponta os caminhos para o SDK e o gsKit oficial
           sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -I\$(PS2DEV)/gsKit/include -I\$(PS2DEV)/gsKit/ee/include\n|" Makefile
           
