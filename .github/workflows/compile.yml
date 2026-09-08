@@ -16,6 +16,10 @@ jobs:
       - name: Baixar o código-fonte
         uses: actions/checkout@v4
 
+      - name: Instalar o utilitário Make
+        run: |
+          apk update && apk add --no-cache make
+
       - name: Compilar Módulos Auxiliares (IRX)
         run: |
           cd modules
