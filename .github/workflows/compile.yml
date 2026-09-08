@@ -16,18 +16,22 @@ jobs:
       - name: Baixar o código-fonte
         uses: actions/checkout@v4
 
-      - name: Instalar o utilitário Make
+      - name: Instalar utilitários adicionais
         run: |
-          apk update && apk add --no-cache make sed
+          apk update && apk add --no-cache make sed findutils
 
-      - name: Compilar Projeto Completo LbFn ELF
+      - name: Mapear pastas de inclusão e Compilar Projeto
         run: |
-          # Modifica o Makefile inserindo a compatibilidade newlib e as pastas das bibliotecas modificadas
-          sed -i '1s/^/EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -ILibito0.2.1modify -I.\n/' Makefile
+          # Procura a pasta real onde o arquivo ito.h está guardado no seu repositório
+          ITO_DIR=$(dirname $(find . -name "ito.h" | head -n 1))
+          echo "Pasta encontrada para o ito.h: $ITO_DIR"
           
-          # Executa a compilação limpa
+          # Injeta as flags de compatibilidade e os caminhos dinamicamente no topo do Makefile
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I$ITO_DIR -I. -ILibito0.2.1modify\n|" Makefile
+          
+          # Executa a compilação
           make
-          
+
       - name: Disponibilizar o arquivo ELF Pronto para Download
         uses: actions/upload-artifact@v4
         with:
