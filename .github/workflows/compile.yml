@@ -15,21 +15,24 @@ jobs:
     steps:
       - name: Baixar o seu código-fonte
         uses: actions/checkout@v4
+        with:
+          path: seu_codigo
+
+      - name: Baixar Base Limpa do LaunchELF Oficial
+        uses: actions/checkout@v4
+        with:
+          repository: ps2homebrew/wLaunchELF
+          path: base_uLE
 
       - name: Instalar utilitários de sistema
         run: |
-          apk update && apk add --no-cache make sed git
+          apk update && apk add --no-cache make sed
 
-      - name: Baixar Base Limpa do LaunchELF Oficial
+      - name: Injetar a Correção do Emulador e Compilar
         run: |
-          # Traz a árvore estável do LaunchELF com todas as dependências inclusas
-          git clone https://github.com base_uLE
+          # Copia o SEU arquivo viewer.c corrigido por cima da base oficial estável
+          cp seu_codigo/viewer.c base_uLE/src/viewer.c || cp seu_codigo/LbFn-Andre-Cardozo-1080p-master/viewer.c base_uLE/src/viewer.c || true
           
-          # Copia o SEU arquivo viewer.c (com a nossa correção do NES) para dentro da base limpa
-          cp viewer.c base_uLE/src/viewer.c || cp LbFn-Andre-Cardozo-1080p-master/viewer.c base_uLE/src/viewer.c || true
-
-      - name: Compilar Projeto com Correção Anti-Flicker
-        run: |
           cd base_uLE
           
           # Injeta a flag de compatibilidade necessária para o SDK moderno
