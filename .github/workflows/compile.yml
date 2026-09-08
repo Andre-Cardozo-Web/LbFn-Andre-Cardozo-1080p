@@ -35,10 +35,13 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # LIMPEZA CIRÚRGICA DOS DIRECIONAMENTOS DUPLICADOS DO ARQUIVO CD.H:
+          # LIMPEZA CIRÚRGICA DOS ENUMERADORES CONFLITANTES DO ARQUIVO CD.H:
           if [ -f cd.h ]; then
+            # Comenta todas as definições legadas que colidem com a libcdvd moderna do PS2SDK
             sed -i 's|#define cdGetDiscType|// #define cdGetDiscType|g' cd.h
             sed -i 's|CDVD_TYPE_ILLEGAL,|// CDVD_TYPE_ILLEGAL,|g' cd.h
+            sed -i 's|CDVD_TYPE_CDDA|// CDVD_TYPE_CDDA|g' cd.h
+            sed -i 's|CDVD_TYPE_DVDVIDEO|// CDVD_TYPE_DVDVIDEO|g' cd.h
             sed -i 's|CdvdDiscType_t cdGetDiscType(void);|// CdvdDiscType_t cdGetDiscType(void);|g' cd.h
           fi
           
@@ -68,7 +71,7 @@ jobs:
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig[256];
+          char netConfig;
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
