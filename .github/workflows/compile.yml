@@ -22,8 +22,10 @@ jobs:
 
       - name: Compilar Projeto Completo LbFn ELF
         run: |
+          # Injeta os parâmetros de compatibilidade legada e inclui os caminhos das pastas modificadas
+          export EE_CFLAGS="-DNEWLIB_PORT_AWARE -ILibito0.2.1modify -I."
           make
-
+          
       - name: Disponibilizar o arquivo ELF Pronto para Download
         uses: actions/upload-artifact@v4
         with:
