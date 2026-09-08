@@ -35,27 +35,33 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C AJUSTANDO AS DECLARAÇÕES DE TIPO EXATAS:
+          # 4. REESCREVE O MAIN.C COM CORREÇÕES DE BOOLEANOS MAIÚSCULOS E ARRAYS DE REDE:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
           #include <strings.h>
           #include "launchelf.h"
           #include <audsrv.h>
+          
+          // Definições explícitas de TRUE e FALSE para compatibilidade com código antigo
+          #define FALSE 0
+          #define TRUE 1
+          
           extern u8 *iomanX_irx, *fileXio_irx, *ps2dev9_irx, *ps2atad_irx, *ps2hdd_irx, *ps2fs_irx, *poweroff_irx, *iopmod_irx, *usbd_irx, *cdvd_irx, *ps2ip_irx, *ps2smap_irx, *ps2ftpd_irx, *ps2http_irx, *dns_irx, *vmc_fs_irx, *freesd_irx, *audsrv_irx;
           extern u8 usbhdfsd_irx; extern int size_iomanX_irx, size_fileXio_irx, size_ps2dev9_irx, size_ps2atad_irx, size_ps2hdd_irx, size_ps2fs_irx, size_poweroff_irx, size_iopmod_irx, size_usbd_irx, size_usbhdfsd_irx, size_cdvd_irx, size_ps2ip_irx, size_ps2smap_irx, size_ps2ftpd_irx, size_ps2http_irx, size_dns_irx, size_vmc_fs_irx, size_freesd_irx, size_audsrv_irx;
           int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
           
-          char if_conf; int if_conf_len; 
+          // Definição correta das matrizes de texto da rede para evitar erros no sprintf
+          char if_conf[256]; int if_conf_len; 
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig;
+          char netConfig[256];
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
           extern void itoDI(void);
-          extern void X_clrScr(void); // Ajustado para corresponder ao tipo void(void) do header
+          extern void X_clrScr(void);
           extern void X_drawScr(void);
           extern void FreeFontAscii(void);
           extern void FreeFontKanji(void);
@@ -119,8 +125,8 @@ jobs:
           void showfont(void) { X_drawScr(); }
           void showinfo(void) { X_drawScr(); }
           int ReadCNF(char *direlf) { return 1; }
-          void Reset() { reset=true; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
-          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf[0].path[0]); } X_clrScr(); X_drawScr(); itoVSync(); } }
+          void Reset() { reset=TRUE; SifIopReset("rom0:UDNL rom0:EELOADCNF",0); while(SifIopSync()); }
+          void LaunchMain(void) { while(1) { waitPadReady(0,0); if(readpad()) { if(new_pad & PAD_TRIANGLE) RunElf(setting->dirElf.path); } X_clrScr(); X_drawScr(); itoVSync(); } }
           int main(int argc, char *argv[]) {
               char tmp[MAX_PATH] = "";
               setting = (SETTING*)malloc(sizeof(SETTING)); memset(setting, 0, sizeof(SETTING));
