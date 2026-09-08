@@ -35,11 +35,14 @@ jobs:
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # 4. CORREÇÃO DOS ERROS DE LEITURA DO MAIN.C:
-          # Corrige o erro de digitação do desenvolvedor de smid para smod
+          # 4. CORREÇÃO DOS ERROS DE SINTAXE DO MAIN.C:
+          # Corrige o erro de digitação de smid para smod
           sed -i 's|smid_get_mod_by_name|smod_get_mod_by_name|g' main.c
-          # Injeta a declaração da função de vídeo itoInit() no topo do main.c para o compilador aceitar
+          # Injeta a declaração da função de vídeo itoInit() no topo do main.c
           sed -i '2i\int itoInit(void);' main.c
+          
+          # Reescreve a linha 734 problemática quebrando os blocos 'if' com chaves corretas para o compilador aceitar
+          sed -i 's|if (setting->discControl) loadCdModules(); if (setting->usbkbd_flag) loadUsbKbdModules(); if (setting->usbmouse_flag) loadUsbMouseModules();|if (setting->discControl) { loadCdModules(); } if (setting->usbkbd_flag) { loadUsbKbdModules(); } if (setting->usbmouse_flag) { loadUsbMouseModules(); }|g' main.c
           
           # 5. Ajusta o Makefile local e força a compatibilidade com drivers de vídeo legados
           sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE -I. -ILibito0.2.1modify\nEE_INCS += -I. -ILibito0.2.1modify\n|" Makefile
