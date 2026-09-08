@@ -22,9 +22,12 @@ jobs:
 
       - name: Criar Biblioteca de Vídeo Virtual e Compilar
         run: |
-          # Cria um arquivo ito.h temporário para o compilador não reclamar do motor gráfico original
+          # Cria um arquivo ito.h completo com macros vazias para neutralizar as funções do mod ausente
           echo '#define itoNoVSync()' > ito.h
           echo '#define itoVSync()' >> ito.h
+          echo '#define itoGsFinish()' >> ito.h
+          echo '#define itoSetActiveFrameBuffer(x)' >> ito.h
+          echo '#define itoGetActiveFrameBuffer()' >> ito.h
           
           # Injeta a compatibilidade legada e aponta a pasta raiz no Makefile
           sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I.\n|" Makefile
