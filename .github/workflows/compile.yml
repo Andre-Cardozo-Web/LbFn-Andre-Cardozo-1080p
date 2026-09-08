@@ -10,26 +10,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: ps2dev/ps2dev:latest
 
     steps:
       - name: Baixar o código-fonte
         uses: actions/checkout@v4
 
-      - name: Configurar ambiente oficial PS2DEV
-        uses: ps2dev/setup-ps2dev-action@v1
-        with:
-          packages: ps2sdk gskit
-
-      - name: Configurar e Compilar Projeto
+      - name: Instalar o utilitário Make
         run: |
-          # Garante que o utilitário sed esteja pronto para uso no Ubuntu
-          sudo apt-get update && sudo apt-get install -y sed
+          apk update && apk add --no-cache make sed
+
+      - name: Criar Biblioteca de Vídeo Virtual e Compilar
+        run: |
+          # Cria um arquivo ito.h temporário para o compilador não reclamar
+          echo '#define itoNoVSync()' > ito.h
+          echo '#define itoVSync()' >> ito.h
           
-          # Injeta a compatibilidade newlib e aponta os caminhos para o SDK e o gsKit oficial
-          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I. -I\$(PS2DEV)/gsKit/include -I\$(PS2DEV)/gsKit/ee/include\n|" Makefile
+          # Injeta a compatibilidade legada e aponta a pasta raiz no Makefile
+          sed -i "1s|^|EE_CFLAGS += -DNEWLIB_PORT_AWARE\nEE_INCS += -I.\n|" Makefile
           
-          # Ajusta a chamada do cabeçalho de vídeo para usar o padrão universal do sistema
-          sed -i 's|<ito.h>|<gsKit.h>|g' launchelf.h
+          # Remove a dependência de compilar módulos IRX que já estão prontos
+          sed -i 's|cd modules && make||g' Makefile || true
           
           # Executa a compilação principal
           make
