@@ -23,16 +23,16 @@ jobs:
       - name: Compilar Módulos Auxiliares (IRX)
         run: |
           cd modules
-          make clean && make
+          make
 
       - name: Compilar Injetor/Loader
         run: |
           cd loader
-          make clean && make
+          make
 
       - name: Compilar Emulador e Core LbFn ELF
         run: |
-          make clean && make
+          make
 
       - name: Disponibilizar o arquivo ELF Pronto para Download
         uses: actions/upload-artifact@v4
