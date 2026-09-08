@@ -31,13 +31,15 @@ jobs:
           cp -r Libito0.2.1modify/* loader/ || true
           cp Libito0.2.1modify/*.h loader/ || true
           
-          # 3. Resolve os cabeçalhos ausentes e remove o conflito de redifinição de funções de CD/DVD
+          # 3. Resolve os cabeçalhos ausentes no launchelf.h
           sed -i '24d' launchelf.h
           sed -i 's|<cdvd_rpc.h>|<libcdvd.h>|g' launchelf.h
           
-          # Desativa a redefinição conflitante da função de disco no arquivo antigo cd.h do mod
+          # LIMPEZA CIRÚRGICA DOS DIRECIONAMENTOS DUPLICADOS DO ARQUIVO CD.H:
           if [ -f cd.h ]; then
             sed -i 's|#define cdGetDiscType|// #define cdGetDiscType|g' cd.h
+            sed -i 's|CDVD_TYPE_ILLEGAL,|// CDVD_TYPE_ILLEGAL,|g' cd.h
+            sed -i 's|CdvdDiscType_t cdGetDiscType(void);|// CdvdDiscType_t cdGetDiscType(void);|g' cd.h
           fi
           
           # CORREÇÃO FÍSICA DOS TIPOS DE DADOS PARA O COMPILADOR LINUX MODERNO:
@@ -47,7 +49,7 @@ jobs:
           sed -i 's|uint64|u64|g' launchelf.h
           sed -i 's|extern itoGsEnv screen_env;|extern struct itoGsEnv screen_env;|g' launchelf.h
           
-          # 4. REESCREVE O MAIN.C COM CORREÇÕES DE TIPOS GRÁFICOS:
+          # 4. REESCREVE O MAIN.C ALINHANDO OS TIPOS GRÁFICOS DO FILTRO ANTI-FLICKER:
           rm -f main.c
           cat << 'EOF' > main.c
           #include <stdbool.h>
@@ -62,22 +64,21 @@ jobs:
           extern u8 usbhdfsd_irx; extern int size_iomanX_irx, size_fileXio_irx, size_ps2dev9_irx, size_ps2atad_irx, size_ps2hdd_irx, size_ps2fs_irx, size_poweroff_irx, size_iopmod_irx, size_usbd_irx, size_usbhdfsd_irx, size_cdvd_irx, size_ps2ip_irx, size_ps2smap_irx, size_ps2ftpd_irx, size_ps2http_irx, size_dns_irx, size_vmc_fs_irx, size_freesd_irx, size_audsrv_irx;
           int trayopen=FALSE; char LaunchElfDir[MAX_PATH], mainMsg[MAX_PATH]; int boot; int reset=FALSE, usbmass=0, usbd=0, usbkbd=0, usbmouse=0;
           
-          char if_conf[64]; int if_conf_len; 
+          char if_conf; int if_conf_len; 
           char ip[] = "192.168.0.10"; 
           char netmask[] = "255.255.255.0"; 
           char gw[] = "192.168.0.1"; 
-          char netConfig[128];
+          char netConfig[256];
           
           extern int redraw, fieldbuffers;
           extern void drawMsg(const char *msg);
           extern void itoDI(void);
-          extern void clrScr(u64 color); // Corrigido para corresponder à função original
+          extern void clrScr(u64 color);
           extern void drawScr(void);
           extern void FreeFontAscii(void);
           extern void FreeFontKanji(void);
           extern void FreeLanguage(void);
           extern void RunLoaderElf(char *filename, char *party);
-          
           void PS2Browser(void) { __asm__ __volatile__("li $3, 0x04; syscall; nop;"); }
           void FormatMemoryCard(void) { MessageBox("FormatMC Desativado", "Format", MB_OK); }
           static void getIpConfig(void) { sprintf(netConfig, "Net: %s", ip); }
